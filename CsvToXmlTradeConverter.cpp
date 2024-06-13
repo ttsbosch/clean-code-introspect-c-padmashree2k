@@ -5,7 +5,7 @@
 #include <converter.h>
 #include <splitString.h>
 #include <tradeReport.h>
-
+#include <CsvToXmlTradeConverter.h>
  
 void CsvToXmlTradeConverter(FILE* stream) {
     char line[1024];
@@ -64,4 +64,3 @@ void CsvToXmlTradeConverter(FILE* stream) {
     fclose(outFile);
     printf("INFO: %d trades processed\n", objectCount);
 }
-
