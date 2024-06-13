@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <converter.h>
+#include <splitString.h>
+#include <tradeReport.h>
 
     char** tokens = (char**)malloc(sizeof(char*) * (count + 2));
     int i = 0;
