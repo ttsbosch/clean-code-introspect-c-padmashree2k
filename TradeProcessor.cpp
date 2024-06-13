@@ -3,13 +3,16 @@
 #include <string.h>
 #include <errno.h>
 
-typedef struct {
-    char SC[256]; // SourceCurrency
-    char DC[256]; // DestibationCurrency
-    float Lots;
-    double Price;
-} TR;
+#define MAX_LINE_LENGTH 1024
+#define MAX_TRADE_OBJECTS 1024
+#define CURRENCY_CODE_LENGTH 3
 
+typedef struct {
+    char SC[CURRENCY_CODE_LENGTH + 1]; // SourceCurrency
+    char DC[CURRENCY_CODE_LENGTH + 1]; // DestinationCurrency
+    int Lots;
+    double Price;
+} TradeRecord;
 
 char** SplitString(const char* str, char delimiter) {
     int count = 0;
@@ -20,15 +23,29 @@ char** SplitString(const char* str, char delimiter) {
         }
     }
 
-    char** tokens = (char**)malloc(sizeof(char*) * (count + 2));
+    char** tokens = malloc(sizeof(char*) * (count + 2));
+    if (!tokens) {
+        fprintf(stderr, "ERROR: Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
     int i = 0;
     ptr = str;
-    char* token = (char*)malloc(strlen(str) + 1);
+    char* token = malloc(strlen(str) + 1);
+    if (!token) {
+        fprintf(stderr, "ERROR: Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
     int j = 0;
     while (*ptr != '\0') {
         if (*ptr == delimiter) {
             token[j] = '\0';
             tokens[i++] = strdup(token);
+            if (!tokens[i - 1]) {
+                fprintf(stderr, "ERROR: Memory allocation failed\n");
+                exit(EXIT_FAILURE);
+            }
             j = 0;
         } else {
             token[j++] = *ptr;
@@ -37,33 +54,39 @@ char** SplitString(const char* str, char delimiter) {
     }
     token[j] = '\0';
     tokens[i++] = strdup(token);
+    if (!tokens[i - 1]) {
+        fprintf(stderr, "ERROR: Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
     tokens[i] = NULL;
     free(token);
     return tokens;
 }
 
-
-int intGetFromString(const char* str, int* value) {
+int parseIntFromString(const char* str, int* value) {
     char* endptr;
-    *value = strtol(str, &endptr, 10);
-    if (endptr == str) {
-        return 0;
+    errno = 0; // Reset errno before calling strtol
+    long parsed = strtol(str, &endptr, 10);
+    if (errno != 0 || endptr == str) {
+        return 0; // Failed to parse or no digits found
     }
-    return 1;
+    *value = (int)parsed;
+    return 1; // Successfully parsed
 }
 
-int toDouble(const char* str, double* value) {
+int parseDouble(const char* str, double* value) {
     char* endptr;
+    errno = 0; // Reset errno before calling strtod
     *value = strtod(str, &endptr);
-    if (endptr == str) {
-        return 0;
+    if (errno != 0 || endptr == str) {
+        return 0; // Failed to parse or no valid double found
     }
-    return 1;
+    return 1; // Successfully parsed
 }
 
 void Process(FILE* stream) {
-    char line[1024];
-    TR objects[1024];
+    char line[MAX_LINE_LENGTH];
+    TradeRecord objects[MAX_TRADE_OBJECTS];
     int lineCount = 0;
     int objectCount = 0;
 
@@ -81,30 +104,36 @@ void Process(FILE* stream) {
             continue;
         }
 
-        if (strlen(fields[0]) != 6) {
+        if (strlen(fields[0]) != CURRENCY_CODE_LENGTH * 2) {
             fprintf(stderr, "WARN: Trade currencies on line %d malformed: '%s'\n", lineCount + 1, fields[0]);
             continue;
         }
 
         int tam;
-        if (!intGetFromString(fields[1], &tam)) {
+        if (!parseIntFromString(fields[1], &tam)) {
             fprintf(stderr, "WARN: Trade amount on line %d not a valid integer: '%s'\n", lineCount + 1, fields[1]);
+            continue;
         }
 
         double tp;
-        if (!toDouble(fields[2], &tp)) {
+        if (!parseDouble(fields[2], &tp)) {
             fprintf(stderr, "WARN: Trade price on line %d not a valid decimal: '%s'\n", lineCount + 1, fields[2]);
+            continue;
         }
 
-        strncpy(objects[objectCount].SC, fields[0], 3);
-        strncpy(objects[objectCount].DC, fields[0] + 3, 3);
-        objects[objectCount].Lots = tam / LotSize;
+        strncpy(objects[objectCount].SC, fields[0], CURRENCY_CODE_LENGTH);
+        strncpy(objects[objectCount].DC, fields[0] + CURRENCY_CODE_LENGTH, CURRENCY_CODE_LENGTH);
+        objects[objectCount].Lots = tam / LotSize; // Assuming LotSize is defined elsewhere
         objects[objectCount].Price = tp;
         objectCount++;
         lineCount++;
     }
 
     FILE* outFile = fopen("output.xml", "w");
+    if (!outFile) {
+        fprintf(stderr, "ERROR: Unable to open output file for writing\n");
+        exit(EXIT_FAILURE);
+    }
     fprintf(outFile, "<TradeRecords>\n");
     for (int i = 0; i < objectCount; i++) {
         fprintf(outFile, "\t<TradeRecord>\n");
@@ -118,4 +147,3 @@ void Process(FILE* stream) {
     fclose(outFile);
     printf("INFO: %d trades processed\n", objectCount);
 }
-
