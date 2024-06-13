@@ -35,15 +35,6 @@ int intGetFromString(const char* str, int* value) {
     return 1;
 }
 
-int toDouble(const char* str, double* value) {
-    char* endptr;
-    *value = strtod(str, &endptr);
-    if (endptr == str) {
-        return 0;
-    }
-    return 1;
-}
-
 void Process(FILE* stream) {
     char line[1024];
     tradeReport objects[1024];
