@@ -29,14 +29,7 @@
 }
 
 
-int intGetFromString(const char* str, int* value) {
-    char* endptr;
-    *value = strtol(str, &endptr, 10);
-    if (endptr == str) {
-        return 0;
-    }
-    return 1;
-}
+
 
 void Process(FILE* stream) {
     char line[1024];
