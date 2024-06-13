@@ -1,4 +1,4 @@
-int toDouble(const char* str, double* value) {
+int tryToConverttoDoubleFromString(const char* str, double* value) {
     char* endptr;
     *value = strtod(str, &endptr);
     if (endptr == str) {
@@ -7,7 +7,7 @@ int toDouble(const char* str, double* value) {
     return 1;
 }
 
-int intGetFromString(const char* str, int* value) {
+int tryToConverttoIntFromString(const char* str, int* value) {
     char* endptr;
     *value = strtol(str, &endptr, 10);
     if (endptr == str) {
