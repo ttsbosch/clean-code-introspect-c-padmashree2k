@@ -8,8 +8,8 @@
 #define CURRENCY_CODE_LENGTH 3
 
 typedef struct {
-    char SC[CURRENCY_CODE_LENGTH + 1]; // SourceCurrency
-    char DC[CURRENCY_CODE_LENGTH + 1]; // DestinationCurrency
+    char sourceCurrency[CURRENCY_CODE_LENGTH + 1]; // SourceCurrency
+    char destibationCurrency[CURRENCY_CODE_LENGTH + 1]; // DestinationCurrency
     int Lots;
     double Price;
 } TradeRecord;
@@ -109,22 +109,22 @@ void Process(FILE* stream) {
             continue;
         }
 
-        int tam;
-        if (!parseIntFromString(fields[1], &tam)) {
+        int tradeAmount;
+        if (!parseIntFromString(fields[1], &tradeAmount)) {
             fprintf(stderr, "WARN: Trade amount on line %d not a valid integer: '%s'\n", lineCount + 1, fields[1]);
             continue;
         }
 
-        double tp;
-        if (!parseDouble(fields[2], &tp)) {
+        double tradePrice;
+        if (!parseDouble(fields[2], &tradePrice)) {
             fprintf(stderr, "WARN: Trade price on line %d not a valid decimal: '%s'\n", lineCount + 1, fields[2]);
             continue;
         }
 
-        strncpy(objects[objectCount].SC, fields[0], CURRENCY_CODE_LENGTH);
-        strncpy(objects[objectCount].DC, fields[0] + CURRENCY_CODE_LENGTH, CURRENCY_CODE_LENGTH);
-        objects[objectCount].Lots = tam / LotSize; // Assuming LotSize is defined elsewhere
-        objects[objectCount].Price = tp;
+        strncpy(objects[objectCount].sourceCurrency, fields[0], CURRENCY_CODE_LENGTH);
+        strncpy(objects[objectCount].destibationCurrency, fields[0] + CURRENCY_CODE_LENGTH, CURRENCY_CODE_LENGTH);
+        objects[objectCount].Lots = tradeAmount / LotSize; // Assuming LotSize is defined elsewhere
+        objects[objectCount].Price = tradePrice;
         objectCount++;
         lineCount++;
     }
@@ -137,8 +137,8 @@ void Process(FILE* stream) {
     fprintf(outFile, "<TradeRecords>\n");
     for (int i = 0; i < objectCount; i++) {
         fprintf(outFile, "\t<TradeRecord>\n");
-        fprintf(outFile, "\t\t<SourceCurrency>%s</SourceCurrency>\n", objects[i].SC);
-        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", objects[i].DC);
+        fprintf(outFile, "\t\t<SourceCurrency>%s</SourceCurrency>\n", objects[i].sourceCurrency);
+        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", objects[i].destibationCurrency);
         fprintf(outFile, "\t\t<Lots>%d</Lots>\n", objects[i].Lots);
         fprintf(outFile, "\t\t<Price>%f</Price>\n", objects[i].Price);
         fprintf(outFile, "\t</TradeRecord>\n");
