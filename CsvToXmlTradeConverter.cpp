@@ -7,7 +7,7 @@
 #include <tradeReport.h>
 
  
-void Process(FILE* stream) {
+void CsvToXmlTradeConverter(FILE* stream) {
     char line[1024];
     tradeReport objects[1024];
     int lineCount = 0;
